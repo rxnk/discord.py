@@ -26,9 +26,9 @@ from __future__ import annotations
 
 import asyncio
 import time
+import logging
 from typing import TYPE_CHECKING, Generator, Optional, Type, TypeVar
 
-from loguru import logger as log
 
 if TYPE_CHECKING:
     from .abc import Messageable, MessageableChannel
@@ -42,6 +42,8 @@ __all__ = (
     'Typing',
 )
 # fmt: on
+
+_log = logging.getLogger(__name__)
 
 
 def _typing_done_callback(fut: asyncio.Future) -> None:
@@ -78,7 +80,7 @@ class Typing:
 
         while True:
             if time.time() > self.typing_deadline:
-                return log.warning(
+                return _log.warning(
                     "Typing keepalive for channel {!r} (guild={} id={}) exceeded {}s deadline — task exiting",
                     getattr(channel, "name", "unknown"),
                     getattr(getattr(channel, "guild", None), "id", "DM"),
