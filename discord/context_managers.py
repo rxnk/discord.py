@@ -25,7 +25,10 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
+import time
 from typing import TYPE_CHECKING, Generator, Optional, Type, TypeVar
+
+from loguru import logger as log
 
 if TYPE_CHECKING:
     from .abc import Messageable, MessageableChannel
@@ -54,6 +57,7 @@ class Typing:
         self.loop: asyncio.AbstractEventLoop = messageable._state.loop
         self.messageable: Messageable = messageable
         self.channel: Optional[MessageableChannel] = None
+        self.typing_deadline: float = 0
 
     async def _get_channel(self) -> MessageableChannel:
         if self.channel:
@@ -69,19 +73,28 @@ class Typing:
     def __await__(self) -> Generator[None, None, None]:
         return self.wrapped_typer().__await__()
 
-    async def do_typing(self) -> None:
-        channel = await self._get_channel()
-        typing = channel._state.http.send_typing
+    async def do_typing(self, channel: MessageableChannel) -> None:
+        self.typing_deadline = time.time() + (60 * 3)
 
         while True:
-            await asyncio.sleep(5)
-            await typing(channel.id)
+            if time.time() > self.typing_deadline:
+                return log.warning(
+                    "Typing keepalive for channel {!r} (guild={} id={}) exceeded {}s deadline — task exiting",
+                    getattr(channel, "name", "unknown"),
+                    getattr(getattr(channel, "guild", None), "id", "DM"),
+                    channel.id,
+                    int(time.time() - (self.typing_deadline - 60 * 3)),
+                )
+                
+            await channel._state.http.send_typing(channel.id)
+            await asyncio.sleep(4.2)
 
-    async def __aenter__(self) -> None:
+    async def __aenter__(self) -> Typing:
         channel = await self._get_channel()
         await channel._state.http.send_typing(channel.id)
-        self.task: asyncio.Task[None] = self.loop.create_task(self.do_typing())
+        self.task: asyncio.Task[None] = asyncio.create_task(self.do_typing(channel))
         self.task.add_done_callback(_typing_done_callback)
+        return self
 
     async def __aexit__(
         self,
@@ -89,4 +102,6 @@ class Typing:
         exc: Optional[BE],
         traceback: Optional[TracebackType],
     ) -> None:
-        self.task.cancel()
+        if self.task:
+            self.task.cancel()
+            asyncio.ensure_future(asyncio.gather(self.task, return_exceptions=True))
