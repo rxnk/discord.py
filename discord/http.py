@@ -736,9 +736,18 @@ class HTTPClient:
                                 )
                                 raise RateLimited(retry_after)
 
-                            fmt = 'We are being rate limited. %s %s responded with 429. Retrying in %.2f seconds.'
-                            _log.warning(fmt, method, url, retry_after)
+                            elif method in ("POST", "PATCH") and (
+                                "channel" in url
+                                or "emoji" in url
+                            ):
+                                raise RateLimited(retry_after)
 
+                            fmt = 'We are being rate limited. %s %s responded with 429. Retrying in %.2f seconds.'
+                            if retrty_after > 1
+                                _log.warning(fmt, method, url, retry_after)
+                            else:
+                                _log.debug(fmt, method, url, retry_after)
+                                
                             _log.debug(
                                 'Rate limit is being handled by bucket hash %s with %r major parameters',
                                 bucket_hash,

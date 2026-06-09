@@ -1282,11 +1282,29 @@ class Guild(Hashable):
         if discriminator == '0' or (len(discriminator) == 4 and discriminator.isdigit()):
             return utils.find(lambda m: m.name == username and m.discriminator == discriminator, members)
 
-        def pred(m: Member) -> bool:
-            return m.nick == name or m.global_name == name or m.name == name
+        query = name.lower()
+        # exact
+        for m in members:
+            if m.name.lower() == query or m.display_name.lower() == query:
+                return m
 
-        return utils.find(pred, members)
+        # prefix
+        for m in members:
+            if m.name.lower().startswith(query) or m.display_name.lower().startswith(query):
+                return m
 
+        # fuzzy
+        candidates: dict[str, Member] = {}
+        for m in members:
+            candidates.setdefault(m.display_name.lower(), m)
+            candidates.setdefault(m.name.lower(), m)
+
+        matches = difflib.get_close_matches(query, candidates.keys(), n=1, cutoff=cutoff)
+        if matches:
+            return candidates[matches[0]]
+
+        return None
+        
     @overload
     def _create_channel(
         self,

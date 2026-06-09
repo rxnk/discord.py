@@ -196,13 +196,13 @@ class _Semaphore:
         return f'<_Semaphore value={self.value} waiters={len(self._waiters)}>'
 
     def locked(self) -> bool:
-        return self.value == 0
+        return self.value <= 0
 
     def is_active(self) -> bool:
         return len(self._waiters) > 0
 
     def wake_up(self) -> None:
-        while self._waiters:
+        while self._waiters and self.value > 0:
             future = self._waiters.popleft()
             if not future.done():
                 future.set_result(None)
@@ -222,14 +222,19 @@ class _Semaphore:
                 future.cancel()
                 if self.value > 0 and not future.cancelled():
                     self.wake_up()
+
                 raise
 
         self.value -= 1
         return True
 
     def release(self) -> None:
+        if self.value < 0:
+            self.value = 0
+
         self.value += 1
         self.wake_up()
+
 
 
 class MaxConcurrency:
