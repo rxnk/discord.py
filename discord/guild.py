@@ -97,6 +97,7 @@ from .automod import AutoModRule, AutoModTrigger, AutoModRuleAction
 from .partial_emoji import _EmojiTag, PartialEmoji
 from .soundboard import SoundboardSound
 from .presences import RawPresenceUpdateEvent
+import difflib
 
 __all__ = (
     'Guild',
