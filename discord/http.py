@@ -743,7 +743,7 @@ class HTTPClient:
                                 raise RateLimited(retry_after)
 
                             fmt = 'We are being rate limited. %s %s responded with 429. Retrying in %.2f seconds.'
-                            if retrty_after > 1:
+                            if retry_after > 1:
                                 _log.warning(fmt, method, url, retry_after)
                             else:
                                 _log.debug(fmt, method, url, retry_after)
