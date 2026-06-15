@@ -1300,7 +1300,7 @@ class Guild(Hashable):
             candidates.setdefault(m.display_name.lower(), m)
             candidates.setdefault(m.name.lower(), m)
 
-        matches = difflib.get_close_matches(query, candidates.keys(), n=1, cutoff=cutoff)
+        matches = difflib.get_close_matches(query, candidates.keys(), n=1)
         if matches:
             return candidates[matches[0]]
 
