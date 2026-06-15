@@ -80,14 +80,15 @@ class Typing:
 
         while True:
             if time.time() > self.typing_deadline:
-                return _log.warning(
-                    "Typing keepalive for channel {!r} (guild={} id={}) exceeded {}s deadline — task exiting",
+                _log.warning(
+                    "Typing keepalive for channel %r (guild=%s id=%s) exceeded %ds deadline — task exiting",
                     getattr(channel, "name", "unknown"),
                     getattr(getattr(channel, "guild", None), "id", "DM"),
                     channel.id,
                     int(time.time() - (self.typing_deadline - 60 * 3)),
                 )
-                
+                return
+
             await channel._state.http.send_typing(channel.id)
             await asyncio.sleep(4.2)
 
