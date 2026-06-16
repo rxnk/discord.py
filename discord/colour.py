@@ -181,6 +181,7 @@ class Colour:
 
         The following formats are accepted:
 
+        - ``<hex>``
         - ``0x<hex>``
         - ``#<hex>``
         - ``0x#<hex>``
@@ -214,6 +215,9 @@ class Colour:
         if arg[0:3] == 'rgb':
             return parse_rgb(arg)
 
+        if len(value) in (3, 6) and all(c in '0123456789abcdefABCDEF' for c in value):
+            return parse_hex_number(value)
+            
         raise ValueError('unknown colour format given')
 
     @classmethod
