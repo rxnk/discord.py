@@ -45,6 +45,23 @@ if TYPE_CHECKING:
     from .types.emoji import Emoji as EmojiPayload, PartialEmoji as PartialEmojiPayload
     from .types.activity import ActivityEmoji
 
+def _twemoji_codepoints(value: str) -> str:
+    codepoints = []
+    i = 0
+
+    while i < len(value):
+        cp = ord(value[i])
+
+        if 0xD800 <= cp <= 0xDBFF and i + 1 < len(value):
+            low = ord(value[i + 1])
+            if 0xDC00 <= low <= 0xDFFF:
+                cp = 0x10000 + ((cp - 0xD800) << 10) + (low - 0xDC00)
+                i += 1
+
+        codepoints.append(f"{cp:x}")
+        i += 1
+
+    return "-".join(codepoints)
 
 class _EmojiTag:
     __slots__ = ()
@@ -248,16 +265,15 @@ class PartialEmoji(_EmojiTag, AssetMixin):
 
     @property
     def url(self) -> str:
-        """:class:`str`: Returns the URL of the emoji, if it is custom.
-
-        If this isn't a custom emoji then an empty string is returned
-        """
         if self.is_unicode_emoji():
-            return ''
+            return (
+                "https://jdecked.github.io/twemoji/v/latest/svg/"
+                f"{_twemoji_codepoints(self.name)}.svg"
+            )
 
-        end = 'webp?animated=true' if self.animated else 'png'
-        return f'{Asset.BASE}/emojis/{self.id}.{end}'
-
+        ext = 'webp?animated=true' if self.animated else 'png'
+        return f"{Asset.BASE}/emojis/{self.id}.{ext}"
+    
     async def read(self) -> bytes:
         """|coro|
 
