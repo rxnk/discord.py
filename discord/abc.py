@@ -29,7 +29,13 @@ from typing import TYPE_CHECKING, Any, Dict, Generator, Generic, List, Optional,
 
 import discord.abc
 import discord.utils
-from discord import Interaction, Message, Attachment, MessageType, User, PartialMessageable, Permissions, ChannelType, Thread
+from discord.interactions import Interaction
+from discord.message import Message, Attachment, MessageType
+from discord.user import User
+from discord.channel import PartialMessageable
+from discord.permissions import Permissions
+from discord.enums import ChannelType
+from discord.threads import Thread
 from discord.context_managers import Typing
 from .view import StringView
 
