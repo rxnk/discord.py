@@ -28,6 +28,7 @@ import asyncio
 import time
 import logging
 from typing import TYPE_CHECKING, Generator, Optional, Type, TypeVar
+from contextlib import suppress
 
 if TYPE_CHECKING:
     from .abc import Messageable, MessageableChannel
