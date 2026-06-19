@@ -55,11 +55,12 @@ def _typing_done_callback(fut: asyncio.Future) -> None:
 
 
 class Typing:
-    def __init__(self, messageable: Messageable) -> None:
+    def __init__(self, messageable: Messageable, background: bool = True) -> None:
         self.loop: asyncio.AbstractEventLoop = messageable._state.loop
         self.messageable: Messageable = messageable
         self.channel: Optional[MessageableChannel] = None
         self.typing_deadline: float = 0
+        self.background: bool = background
 
     async def _get_channel(self) -> MessageableChannel:
         if self.channel:
@@ -94,7 +95,12 @@ class Typing:
 
     async def __aenter__(self) -> Typing:
         channel = await self._get_channel()
-        await channel._state.http.send_typing(channel.id)
+        with suppress(asyncio.CancelledError, Exception):
+            if self.background:
+                asyncio.create_task((channel._state.http.send_typing(channel.id)))
+            else:
+                await channel._state.http.send_typing(channel.id)
+
         self.task: asyncio.Task[None] = asyncio.create_task(self.do_typing(channel))
         self.task.add_done_callback(_typing_done_callback)
         return self
