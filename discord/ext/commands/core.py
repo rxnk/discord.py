@@ -1343,7 +1343,7 @@ class GroupMixin(Generic[CogT]):
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        case_insensitive = kwargs.get('case_insensitive', False)
+        case_insensitive = kwargs.get('case_insensitive', True)
         self.all_commands: Dict[str, Command[CogT, ..., Any]] = _CaseInsensitiveDict() if case_insensitive else {}
         self.case_insensitive: bool = case_insensitive
         super().__init__(*args, **kwargs)
