@@ -455,12 +455,9 @@ class Member(discord.abc.Messageable, _UserTag):
             u.global_name,
             u._public_flags,
             u._avatar_decoration_data['sku_id'] if u._avatar_decoration_data is not None else None,
-            u._primary_guild,
         )
 
         decoration_payload = user.get('avatar_decoration_data')
-        primary_guild_payload = user.get('primary_guild', None)
-        # These keys seem to always be available
         modified = (
             user['username'],
             user['discriminator'],
@@ -468,9 +465,13 @@ class Member(discord.abc.Messageable, _UserTag):
             user.get('global_name'),
             user.get('public_flags', 0),
             decoration_payload['sku_id'] if decoration_payload is not None else None,
-            primary_guild_payload,
         )
-        if original != modified:
+
+        has_primary_guild_key = 'primary_guild' in user
+        primary_guild_payload = user.get('primary_guild')
+        primary_guild_changed = has_primary_guild_key and u._primary_guild != primary_guild_payload
+
+        if original != modified or primary_guild_changed:
             to_return = User._copy(self._user)
             (
                 u.name,
@@ -479,7 +480,6 @@ class Member(discord.abc.Messageable, _UserTag):
                 u.global_name,
                 u._public_flags,
                 u._avatar_decoration_data,
-                u._primary_guild,
             ) = (
                 user['username'],
                 user['discriminator'],
@@ -487,9 +487,10 @@ class Member(discord.abc.Messageable, _UserTag):
                 user.get('global_name'),
                 user.get('public_flags', 0),
                 decoration_payload,
-                primary_guild_payload,
             )
-            # Signal to dispatch on_user_update
+            if has_primary_guild_key:
+                u._primary_guild = primary_guild_payload
+                
             return to_return, u
 
     @property
